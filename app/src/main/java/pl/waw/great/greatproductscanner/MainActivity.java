@@ -35,15 +35,23 @@ import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
 
+import org.chromium.net.CronetEngine;
+
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
     private MaterialButton cameraBtn;
     private MaterialButton scanBtn;
     private MaterialButton loadBtn;
+    private MaterialButton sendBarcodeBtn;
     private ImageView imageView;
     private TextView resultTv;
+    private String scannedBarcode;
 
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int STORAGE_REQUEST_CODE = 101;
@@ -66,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         loadBtn = findViewById(R.id.loadBtn);
         imageView = findViewById(R.id.imageIv);
         resultTv = findViewById(R.id.resultTv);
+        sendBarcodeBtn = findViewById(R.id.sendBarcode);
 
         cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         storagePermissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
@@ -111,6 +120,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        sendBarcodeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (scannedBarcode == null) {
+                    Toast.makeText(MainActivity.this, "Najpierw zeskanuj kod", Toast.LENGTH_SHORT).show();
+                } else {
+                    sendBarcode();
+                }
+            }
+        });
+
+    }
+
+
+    private void sendBarcode() {
+        ApiInterface apiInterface = RetrofitClinet.getRetroFitInstance().create(ApiInterface.class);
+        BarcodeScan barcodeScan = new BarcodeScan(scannedBarcode);
+        Call<BarcodeScan> call = apiInterface.sendBarcode(barcodeScan);
+        call.enqueue(new Callback<BarcodeScan>() {
+            @Override
+            public void onResponse(Call<BarcodeScan> call, Response<BarcodeScan> response) {
+                Log.e(TAG, "onResponse: " + response.code());
+                Toast.makeText(MainActivity.this, "Zeskanowany kod zostal przeslany", Toast.LENGTH_SHORT).show();
+                resultTv.setText("");
+            }
+
+            @Override
+            public void onFailure(Call<BarcodeScan> call, Throwable t) {
+                Log.e(TAG,"oneFailure: " + t.getMessage());
+                resultTv.setText("");
+
+                Toast.makeText(MainActivity.this, "Zeskanowany kod zostal przeslany", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
     private void detectBarcodeFromImage() {
@@ -141,11 +185,11 @@ public class MainActivity extends AppCompatActivity {
             Rect bounds = barcode.getBoundingBox();
             Point[] corners = barcode.getCornerPoints();
 
-            String rawValue = barcode.getRawValue();
-            Log.d(TAG, "extractBarcodeInfo: rawValuie: " + rawValue);
+            scannedBarcode = barcode.getRawValue();
+            Log.d(TAG, "extractBarcodeInfo: rawValuie: " + scannedBarcode);
             int valueType = barcode.getValueType();
 
-           resultTv.setText("Odczytany kod: " + rawValue);
+           resultTv.setText("Odczytany kod: " + scannedBarcode);
         }
     }
 

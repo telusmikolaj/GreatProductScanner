@@ -66,6 +66,13 @@
             style="@style/TextAppearance.AppCompat.Headline"
             android:text="Result"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sendBarcode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Przeslij zeskanowany kod"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"/>
 
 
     </LinearLayout>
